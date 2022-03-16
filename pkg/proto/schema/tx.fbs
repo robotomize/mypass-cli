@@ -1,0 +1,23 @@
+// Example IDL file for our monster's schema.
+namespace gen;
+
+table Entry {
+    id:string;
+    title:string;
+    password:string;
+    created_at:long;
+    updated_at:long;
+}
+
+table Tx {
+  hash:[byte];
+  kind:byte;
+  ts:long;
+  payload:Entry;
+}
+
+table TxList {
+    list:[Tx];
+}
+
+root_type TxList;
