@@ -10,8 +10,8 @@ table Entry {
 }
 
 table Tx {
-  hash:[byte];
-  kind:byte;
+  hash:[ubyte];
+  kind:ubyte;
   ts:long;
   payload:Entry;
 }

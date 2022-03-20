@@ -33,11 +33,11 @@ func (rcv *Tx) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
-func (rcv *Tx) Hash(j int) int8 {
+func (rcv *Tx) Hash(j int) byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
 		a := rcv._tab.Vector(o)
-		return rcv._tab.GetInt8(a + flatbuffers.UOffsetT(j*1))
+		return rcv._tab.GetByte(a + flatbuffers.UOffsetT(j*1))
 	}
 	return 0
 }
@@ -50,25 +50,33 @@ func (rcv *Tx) HashLength() int {
 	return 0
 }
 
-func (rcv *Tx) MutateHash(j int, n int8) bool {
+func (rcv *Tx) HashBytes() []byte {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
+	if o != 0 {
+		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+	}
+	return nil
+}
+
+func (rcv *Tx) MutateHash(j int, n byte) bool {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
 		a := rcv._tab.Vector(o)
-		return rcv._tab.MutateInt8(a+flatbuffers.UOffsetT(j*1), n)
+		return rcv._tab.MutateByte(a+flatbuffers.UOffsetT(j*1), n)
 	}
 	return false
 }
 
-func (rcv *Tx) Kind() int8 {
+func (rcv *Tx) Kind() byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		return rcv._tab.GetInt8(o + rcv._tab.Pos)
+		return rcv._tab.GetByte(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *Tx) MutateKind(n int8) bool {
-	return rcv._tab.MutateInt8Slot(6, n)
+func (rcv *Tx) MutateKind(n byte) bool {
+	return rcv._tab.MutateByteSlot(6, n)
 }
 
 func (rcv *Tx) Ts() int64 {
@@ -105,8 +113,8 @@ func TxAddHash(builder *flatbuffers.Builder, hash flatbuffers.UOffsetT) {
 func TxStartHashVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(1, numElems, 1)
 }
-func TxAddKind(builder *flatbuffers.Builder, kind int8) {
-	builder.PrependInt8Slot(1, kind, 0)
+func TxAddKind(builder *flatbuffers.Builder, kind byte) {
+	builder.PrependByteSlot(1, kind, 0)
 }
 func TxAddTs(builder *flatbuffers.Builder, ts int64) {
 	builder.PrependInt64Slot(2, ts, 0)
