@@ -9,6 +9,135 @@ import (
 	"github.com/google/uuid"
 )
 
+func TestTxManager_AddTx(t *testing.T) {
+	t.Parallel()
+	id := uuid.New().String()
+	createdAt := time.Now().UTC()
+	updatedAt := time.Now().UTC()
+
+	testCases := []struct {
+		name     string
+		ts       time.Time
+		entry    Entry
+		expected Tx
+	}{
+		{
+			name: "test_add_tx_0",
+			entry: Entry{
+				ID:        id,
+				Title:     "title",
+				Password:  "title title",
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			},
+			expected: Tx{
+				Kind: TxKindAdd,
+				Payload: Entry{
+					ID:        id,
+					Title:     "title",
+					Password:  "title title",
+					CreatedAt: createdAt,
+					UpdatedAt: updatedAt,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			manager := NewTxManager()
+			if err := manager.AddTx(tc.entry); err != nil {
+				t.Fatalf("add tx: %v", err)
+			}
+
+			if len(manager.txList) == 0 {
+				t.Fatal("error added tx")
+			}
+
+			hash, err := manager.generateHash(TxKindAdd, manager.txList[0].Ts, tc.entry)
+			if err != nil {
+				t.Fatalf("generate hash: %v", err)
+			}
+
+			tc.expected.Ts = manager.txList[0].Ts
+			tc.expected.Hash = hash
+			if diff := cmp.Diff(tc.expected, manager.txList[0]); diff != "" {
+				t.Errorf("diff (+got, -want): %s", diff)
+			}
+		})
+	}
+}
+
+func TestTxManager_DelTx(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New().String()
+	createdAt := time.Now().UTC()
+	updatedAt := time.Now().UTC()
+
+	testCases := []struct {
+		name     string
+		ts       time.Time
+		entry    Entry
+		expected Tx
+	}{
+		{
+			name: "test_del_tx_0",
+			entry: Entry{
+				ID:        id,
+				Title:     "title",
+				Password:  "title title",
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			},
+			expected: Tx{
+				Kind: TxKindDel,
+				Payload: Entry{
+					ID:        id,
+					Title:     "title",
+					Password:  "title title",
+					CreatedAt: createdAt,
+					UpdatedAt: updatedAt,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			manager := NewTxManager()
+			if err := manager.AddTx(tc.entry); err != nil {
+				t.Fatalf("add tx: %v", err)
+			}
+
+			if err := manager.DelTx(tc.entry); err != nil {
+				t.Fatalf("add tx: %v", err)
+			}
+
+			if len(manager.txList) == 0 {
+				t.Fatal("error added tx")
+			}
+
+			hash, err := manager.generateHash(TxKindDel, manager.txList[1].Ts, tc.entry)
+			if err != nil {
+				t.Fatalf("generate hash: %v", err)
+			}
+
+			tc.expected.Ts = manager.txList[1].Ts
+			tc.expected.Hash = hash
+			if diff := cmp.Diff(tc.expected, manager.txList[1]); diff != "" {
+				t.Errorf("diff (+got, -want): %s", diff)
+			}
+		})
+	}
+}
+
 func TestTxManager_Serialize(t *testing.T) {
 	t.Parallel()
 

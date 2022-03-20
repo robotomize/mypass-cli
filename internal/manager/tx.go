@@ -110,7 +110,7 @@ func (t *TxManager) DelTx(e Entry) error {
 	t.mtx.Lock()
 	defer t.mtx.Unlock()
 
-	return t.DelTx(e)
+	return t.delTx(e)
 }
 
 func (t *TxManager) Deserialize(b []byte) {

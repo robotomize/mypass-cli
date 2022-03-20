@@ -9,6 +9,7 @@ import (
 
 var ErrNotFound = errors.New("record not found")
 
+//go:generate mockgen -source=store.go -destination=mocks.go -package=manager
 type CryptFS interface {
 	Open() ([]byte, error)
 	Write(b []byte) error
@@ -119,11 +120,33 @@ func (s *store) FindByPosition(pos int) (Entry, bool) {
 	return entry, true
 }
 
-func (s *store) Change(pos int, changed ChangeEntry) error {
+func (s *store) ChangeByPos(pos int, changed ChangeEntry) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
 	entry, ok := s.findByPosition(pos)
+	if !ok {
+		return ErrNotFound
+	}
+
+	if err := s.change(entry.ID, changed); err != nil {
+		return fmt.Errorf("change: %w", err)
+	}
+
+	s.rebuild()
+
+	if err := s.sync(); err != nil {
+		return fmt.Errorf("sync: %w", err)
+	}
+
+	return nil
+}
+
+func (s *store) ChangeByID(id string, changed ChangeEntry) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	entry, ok := s.findByID(id)
 	if !ok {
 		return ErrNotFound
 	}
