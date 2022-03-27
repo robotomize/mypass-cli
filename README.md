@@ -10,6 +10,12 @@ In progress. Not for production
 * ~encrypt/decrypt file container~
 * ~transactions support~
 * ~binary serializations~
-* add (add|edit|delete|view|list) commands
+* add (~add~|edit|delete|~view~|list) commands
+* customize user level errors
+* improve command interface
+* advanced logger - add logs folder, write logs to file
+* advanced error handling
+* text interface formatting
+* support darwin/windows arch
 
 

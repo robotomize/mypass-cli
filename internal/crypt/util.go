@@ -2,19 +2,24 @@ package crypt
 
 import (
 	"crypto/sha512"
-	"fmt"
-
-	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/pbkdf2"
 )
 
-func GeneratePrivateKeyFromPassword(password string) ([]byte, error) {
-	salt, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	if err != nil {
-		return nil, fmt.Errorf("bcrypt.GenerateFromPassword")
+func GeneratePrivateKeyFromPassword(keyLen int) func(password string) ([]byte, error) {
+	return func(password string) ([]byte, error) {
+		hash := sha512.New()
+		hash.Write([]byte(password))
+
+		key := pbkdf2.Key([]byte(password), hash.Sum(nil), 4096, keyLen, sha512.New)
+
+		return key, nil
 	}
+}
 
-	key := pbkdf2.Key([]byte(password), salt, 4096, 32, sha512.New)
+func GeneratePrivateKeyAES() func(password string) ([]byte, error) {
+	return GeneratePrivateKeyFromPassword(32)
+}
 
-	return key, nil
+func GeneratePrivateKeyDES() func(password string) ([]byte, error) {
+	return GeneratePrivateKeyFromPassword(8)
 }

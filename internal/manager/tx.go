@@ -12,7 +12,7 @@ import (
 	"time"
 
 	flatbuffers "github.com/google/flatbuffers/go"
-	"github.com/polylab/pollypass-cli/pkg/proto/gen"
+	"github.com/polylab/mypass-cli/pkg/proto/gen"
 )
 
 const (
@@ -114,6 +114,10 @@ func (t *TxManager) DelTx(e Entry) error {
 }
 
 func (t *TxManager) Deserialize(b []byte) {
+	if len(b) == 0 {
+		return
+	}
+
 	list := gen.GetRootAsTxList(b, 0)
 	length := list.ListLength()
 	txs := make([]Tx, length)

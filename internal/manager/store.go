@@ -10,9 +10,15 @@ import (
 var ErrNotFound = errors.New("record not found")
 
 //go:generate mockgen -source=store.go -destination=mocks.go -package=manager
-type CryptFS interface {
+
+type FS interface {
 	Open() ([]byte, error)
 	Write(b []byte) error
+}
+
+type CipherFS interface {
+	FS
+	VerifyCipher() error
 }
 
 type Entry struct {
@@ -28,19 +34,24 @@ type ChangeEntry struct {
 	Password *string
 }
 
-func NewStore(fs CryptFS, txManager *TxManager) *store {
-	return &store{fs: fs, txManager: txManager, data: make([]Entry, 0)}
+func NewStore(fs CipherFS, txManager *TxManager) (*Store, error) {
+	s := &Store{fs: fs, txManager: txManager, data: make([]Entry, 0)}
+	if err := s.load(); err != nil {
+		return nil, fmt.Errorf("load tx: %w", err)
+	}
+
+	return s, nil
 }
 
-type store struct {
-	fs CryptFS
+type Store struct {
+	fs CipherFS
 
 	mtx       sync.RWMutex
 	data      []Entry
 	txManager *TxManager
 }
 
-func (s *store) Add(e Entry) error {
+func (s *Store) Add(e Entry) error {
 	if err := s.txManager.AddTx(e); err != nil {
 		return fmt.Errorf("add tx: %w", err)
 	}
@@ -57,7 +68,7 @@ func (s *store) Add(e Entry) error {
 	return nil
 }
 
-func (s *store) DeleteByID(id string) error {
+func (s *Store) DeleteByID(id string) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -79,11 +90,11 @@ func (s *store) DeleteByID(id string) error {
 	return nil
 }
 
-func (s *store) DeleteByPos(pos int) error {
+func (s *Store) DeleteByNumber(pos int) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	entry, ok := s.findByPosition(pos)
+	entry, ok := s.findByNumber(pos)
 	if !ok {
 		return ErrNotFound
 	}
@@ -101,18 +112,28 @@ func (s *store) DeleteByPos(pos int) error {
 	return nil
 }
 
-func (s *store) FindByID(id string) (Entry, bool) {
+func (s *Store) FindByID(id string) (Entry, bool) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
 	return s.findByID(id)
 }
 
-func (s *store) FindByPosition(pos int) (Entry, bool) {
+func (s *Store) List() []Entry {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
-	entry, ok := s.findByPosition(pos)
+	list := make([]Entry, len(s.data))
+	copy(list, s.data)
+
+	return list
+}
+
+func (s *Store) FindByNumber(pos int) (Entry, bool) {
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
+
+	entry, ok := s.findByNumber(pos)
 	if !ok {
 		return Entry{}, false
 	}
@@ -120,11 +141,11 @@ func (s *store) FindByPosition(pos int) (Entry, bool) {
 	return entry, true
 }
 
-func (s *store) ChangeByPos(pos int, changed ChangeEntry) error {
+func (s *Store) ChangeByPos(pos int, changed ChangeEntry) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	entry, ok := s.findByPosition(pos)
+	entry, ok := s.findByNumber(pos)
 	if !ok {
 		return ErrNotFound
 	}
@@ -142,7 +163,7 @@ func (s *store) ChangeByPos(pos int, changed ChangeEntry) error {
 	return nil
 }
 
-func (s *store) ChangeByID(id string, changed ChangeEntry) error {
+func (s *Store) ChangeByID(id string, changed ChangeEntry) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -164,18 +185,19 @@ func (s *store) ChangeByID(id string, changed ChangeEntry) error {
 	return nil
 }
 
-func (s *store) load() error {
+func (s *Store) load() error {
 	b, err := s.fs.Open()
 	if err != nil {
 		return fmt.Errorf("fs load: %w", err)
 	}
 
 	s.txManager.Deserialize(b)
+	s.rebuild()
 
 	return nil
 }
 
-func (s *store) rebuild() {
+func (s *Store) rebuild() {
 	s.data = s.data[:0]
 	s.txManager.Each(func(t1 Tx) {
 		if t1.Kind == TxKindAdd {
@@ -196,7 +218,7 @@ func (s *store) rebuild() {
 	})
 }
 
-func (s *store) change(id string, changed ChangeEntry) error {
+func (s *Store) change(id string, changed ChangeEntry) error {
 	var entry *Entry
 
 	for _, e := range s.data {
@@ -231,7 +253,7 @@ func (s *store) change(id string, changed ChangeEntry) error {
 	return nil
 }
 
-func (s *store) findByID(id string) (Entry, bool) {
+func (s *Store) findByID(id string) (Entry, bool) {
 	for _, entry := range s.data {
 		if entry.ID == id {
 			return entry, true
@@ -241,7 +263,7 @@ func (s *store) findByID(id string) (Entry, bool) {
 	return Entry{}, false
 }
 
-func (s *store) findByPosition(pos int) (Entry, bool) {
+func (s *Store) findByNumber(pos int) (Entry, bool) {
 	if pos > len(s.data)-1 {
 		return Entry{}, false
 	}
@@ -249,7 +271,7 @@ func (s *store) findByPosition(pos int) (Entry, bool) {
 	return s.data[pos], true
 }
 
-func (s *store) sync() error {
+func (s *Store) sync() error {
 	bytes := s.txManager.Serialize()
 	if err := s.fs.Write(bytes); err != nil {
 		return fmt.Errorf("fs write: %w", err)

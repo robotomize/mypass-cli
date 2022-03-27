@@ -21,22 +21,22 @@ type fs struct {
 func (f fs) Open() ([]byte, error) {
 	b, err := os.ReadFile(f.filename)
 	if err != nil {
-		if os.IsNotExist(err) {
-			f, err := os.OpenFile(f.filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
-			if err != nil {
-				return nil, fmt.Errorf("create file: %w", err)
-			}
-
-			if err = f.Sync(); err != nil {
-				return nil, fmt.Errorf("file sync: %w", err)
-			}
-
-			if err = f.Close(); err != nil {
-				return nil, fmt.Errorf("close file: %w", err)
-			}
+		if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("read file: %w", err)
 		}
 
-		return nil, fmt.Errorf("read file: %w", err)
+		f, err := os.OpenFile(f.filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return nil, fmt.Errorf("create file: %w", err)
+		}
+
+		if err = f.Sync(); err != nil {
+			return nil, fmt.Errorf("file sync: %w", err)
+		}
+
+		if err = f.Close(); err != nil {
+			return nil, fmt.Errorf("close file: %w", err)
+		}
 	}
 
 	return b, nil
