@@ -5,6 +5,13 @@ This console application is a password manager that can be used to store passwor
 # Usage
 In progress. Not for production
 
+First time set master password
+```shell
+mp add
+mp view -i <entry-uuid>
+mp list
+```
+
 # TODO
 * ~save to password file~
 * ~encrypt/decrypt file container~

@@ -24,7 +24,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "pp",
+	Use:   "mp",
 	Short: "",
 	Long:  "",
 }
@@ -43,11 +43,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFileFlag, "config", "c", "", "config file (default is $HOME/.config/pp/settings.yaml)")
-	rootCmd.PersistentFlags().StringVarP(&storageFileFlag, "file", "f", "", "storage file (default is $HOME/.pp/db.bin)")
-	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "storage file (default is $HOME/.pp/db.bin)")
-	rootCmd.PersistentFlags().BoolVar(&aes, "aes", false, "storage file (default is $HOME/.pp/db.bin)")
-	rootCmd.PersistentFlags().BoolVar(&des, "des", false, "storage file (default is $HOME/.pp/db.bin)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFileFlag, "config", "c", "", "config file (default is $HOME/.config/mp/settings.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&storageFileFlag, "file", "f", "", "storage file (default is $HOME/.mp/db.bin)")
+	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "storage file (default is $HOME/.mp/db.bin)")
+	rootCmd.PersistentFlags().BoolVar(&aes, "aes", false, "storage file (default is $HOME/.mp/db.bin)")
+	rootCmd.PersistentFlags().BoolVar(&des, "des", false, "storage file (default is $HOME/.mp/db.bin)")
 	initConfig()
 }
 
@@ -59,7 +59,7 @@ func initConfig() {
 	}
 
 	if storageFileFlag == "" {
-		path := filepath.Join(home, ".pp")
+		path := filepath.Join(home, ".mp")
 		if err = os.MkdirAll(path, 0700); err != nil {
 			if !errors.Is(err, os.ErrExist) {
 				fmt.Println(err)
@@ -73,7 +73,7 @@ func initConfig() {
 	if cfgFileFlag != "" {
 		viper.SetConfigFile(cfgFileFlag)
 	} else {
-		path := filepath.Join(home, ".config", "pp")
+		path := filepath.Join(home, ".config", "mp")
 		if err = os.MkdirAll(path, 0700); err != nil {
 			if !errors.Is(err, os.ErrExist) {
 				fmt.Println(err)
