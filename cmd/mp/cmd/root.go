@@ -45,9 +45,9 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFileFlag, "config", "c", "", "config file (default is $HOME/.config/mp/settings.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&storageFileFlag, "file", "f", "", "storage file (default is $HOME/.mp/db.bin)")
-	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "storage file (default is $HOME/.mp/db.bin)")
-	rootCmd.PersistentFlags().BoolVar(&aes, "aes", false, "storage file (default is $HOME/.mp/db.bin)")
-	rootCmd.PersistentFlags().BoolVar(&des, "des", false, "storage file (default is $HOME/.mp/db.bin)")
+	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "debug")
+	rootCmd.PersistentFlags().BoolVar(&aes, "aes", false, "aes")
+	rootCmd.PersistentFlags().BoolVar(&des, "des", false, "des")
 	initConfig()
 }
 
