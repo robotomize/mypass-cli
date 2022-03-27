@@ -1,4 +1,4 @@
-# Pollypass-cli
+# MyPass-cli
 
 This console application is a password manager that can be used to store passwords in an encrypted container
 
