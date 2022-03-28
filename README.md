@@ -17,6 +17,7 @@ mp list
 * ~encrypt/decrypt file container~
 * ~transactions support~
 * ~binary serializations~
+* improve crypt
 * add (~add~|edit|delete|~view~|list) commands
 * customize user level errors
 * improve command interface
